@@ -8,19 +8,22 @@
 - 第三步：使用 ProtoBuf 的 C++ API 来读写消息。
 #### 定义proto文件
 - test.proto
-```syntax = "proto3";```
-```package monitor.proto;```
-```message CpuLoad {```
-```    float load_avg_1 = 1;```
-```    float load_avg_3 = 2;```
-```    float load_avg_15 = 3;```
-```  }```
+```syntax = "proto3";
+package monitor.proto;
+
+message CpuLoad {
+    float load_avg_1 = 1;
+    float load_avg_3 = 2;
+    float load_avg_15 = 3;
+  }
   
-```message NetInfo {```
-```    string name = 1;```
-```    float send_rate = 2;```
-```  }```
-``` message MonitorInfo{```
-```  CpuLoad cpu_load = 1; #std::string```
-```  repeated NetInfo net_info = 2; # std::vector```
-```}```
+message NetInfo {
+    string name = 1;
+    float send_rate = 2;
+  }
+  
+ message MonitorInfo{
+  CpuLoad cpu_load = 1; #std::string
+  repeated NetInfo net_info = 2; # std::vector
+}
+```
