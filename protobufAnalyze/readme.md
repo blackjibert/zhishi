@@ -1,8 +1,15 @@
-## proto
-### proto基础知识
+## protobuf
+### protobuf基础知识
+#### protobuf
+- 二进制编码，传输较快，易于扩展；
+- 不需要存储多余的信息；
+#### json
+- 文本格式
+- 需要存储其他信息，key，value
+
 #### proto数据类型
 ![Alt text](pic/image1.png)
-#### ProtoBuf 使用一般步骤
+#### protoBuf 使用一般步骤
 - 第一步：定义 proto 文件，文件的内容就是定义我们需要存储或者传输的数据结构，也就是定义我们自己的数据存储或者传输的协议。
 - 第二步：使用 ProtoBuf 编译器 protoc 来编译自定义的 proto 文件，用于生成 .pb.h 文件（proto 文件中自定义类的头文件）和 .pb.cc（proto文件中自定义类的实现文件）。
 - 第三步：使用 ProtoBuf 的 C++ API 来读写消息。
