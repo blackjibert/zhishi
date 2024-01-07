@@ -8,7 +8,8 @@
 - 第三步：使用 ProtoBuf 的 C++ API 来读写消息。
 #### 定义proto文件
 - test.proto
-```syntax = "proto3";
+```
+syntax = "proto3";
 package monitor.proto;
 
 message CpuLoad {
