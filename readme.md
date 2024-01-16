@@ -1,5 +1,5 @@
 ## dataStructure
-### 数据结构的算法
+### 数据结构
 
 ## linuxAnalyze
 ### linux网络通信
