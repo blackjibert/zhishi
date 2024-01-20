@@ -1,4 +1,66 @@
 - https://www.yuque.com/wukong-zorrm/xwas40
+## docker
+- 快速构建、运行、管理应用的工具
+- 传统安装部署:查看版本，卸载旧的，安装新的（安装依赖）
+### docker安装
+- 卸载旧版本，sudo yum remove docker \
+                  docker-client \
+                  docker-client-latest \
+                  docker-common \
+                  docker-latest \
+                  docker-latest-logrotate \
+                  docker-logrotate \
+                  docker-engine
+- 配置yum库，sudo yum install -y yum-utils
+- 安装docker,  sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+- 启动和校验
+- 启动docker, sudo systemctl start docker 
+- 停止dockor, sudo systemctl stop dotker
+- 重启, sudo systemctl restart docker
+- 设置开机启动, sudo systemctl enable docker
+- 执行docker ps命令，如果不版情，说明启动成功，sudo docker ps 运行的镜像，docker ps -a 所有的镜像
+
+### mysql部署
+- sudo docker pull mysql
+- sudo docker run -d --name mysql -p 3306:3306 -e TZ=Asia/Shanghai -e MYSQL_ROOT_PASSWORD=123456 mysql
+- docker run: 创建并运行一个容器，-d是让容器在后台运行
+- --name mysql: 给容器起个名字，必须唯一
+- -p 3306:3306: 设置端口映射，宿主机端口映射到容器内端口
+- -e KEY=VALUE: 设置环境变量
+- mysql:指定运行的镜像的名字，镜像名:版本号
+![Alt text](pic/image8.png)
+
+#### docker run和docker start
+- docker run 只在第一次运行时使用，将镜像放到容器中，以后再次启动这个容器时，只需要使用命令docker start 即可。
+- docker run 相当于执行了两步操作：将镜像放入容器中（docker create）,然后将容器启动，使之变成运行时容器（docker start）。
+- docker start的作用是，重新启动已存在的镜像。也就是说，如果使用这个命令，我们必须事先知道这个容器的ID，或者这个容器的名字，我们可以使用docker ps 找到这个容器的信息。
+ 
+### 镜像和容器
+- 当我们利用Docker安装应用时，Docker会自动搜索并下载应用镜像(image)。镜像不仅包含应用本身，还包含应用运行所需要的环境、配置、系统函数库。Docker会在运行镜像时创建一个隔离环境，称为容器(container)。
+- 镜像仓库:存储和管理镜像的平台，Docker官方维护了一个公共仓库:DockerHub。
+![Alt text](pic/image7.png)
+- **镜像是一个静态的、可重复使用的软件包，而容器是运行时实例（容器针对于同一个镜像可以有多个），是基于镜像创建的、可执行的进程。多个容器可以共享同一个镜像，但每个容器都是独立运行的实例。容器提供了隔离和轻量级的虚拟化，使应用程序在不同环境中具有一致的运行行为。** 删除镜像的话，需要删除其容器。首先查看docker ps -a，然后删除 docker rm 容器，最后 docker iamges 镜像。
+
+### docker 常用命令  
+- 官网参考，https://docs.docker.com/engine/reference/commandline/container_exec/
+![Alt text](pic/image9.png)
+- docker run是创建并运行一个容器，docker start 运行容器，docker stop 暂停容器运行。
+
+### 查看DockerHub，拉取Nginx镜像，创建并运行Nginx容器
+#### 需求:
+- 在DockerHub中搜索Nginx镜像，查看镜像的名称 
+- 拉取Nginx镜像 docker pull nginx:1.22
+- 查看本地镜像列表 docker images
+- 创建并运行Nginx容器  sudo docker run -d --name nginx -p 8080:80 nginx:1.22 也可以在创建并并行一个sudo docker run -d --name nginx2 -p 8081:80 nginx:1.22 注意宿主机端口改变和名称改变
+- 查看容器            docker ps
+- 停止容器            docker stop nginx:1.22
+- 再次启动容器        docker start nginx:1.22
+- 进入Nginx容器       docker exec -it  nginx:1.22 bash, ```-it```是使用交互模式，可以在控制台里输入、输出  
+- 删除容器            docker rm nginx
+- 删除容器2           docker rm nginx2
+- 删除镜像            docker rmi nginx
+
 ## Docker和虚拟机的不同
 #### 1、启动速度不同
 - docker：启动 docker 相当于启动宿主操作系统上的一个进程，启动速度属于秒级别。
@@ -45,7 +107,7 @@
 ### Docker安装
 #### 安装环境: CentOS7.3+
 - 如果之前安装了旧版docker，请先删除
-```sudo yum remove docker ocker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine```
+- ```sudo yum remove docker ocker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine```
 
 #### 安装仓库
 - ```sudo yum install -y yum-utils```
@@ -76,15 +138,17 @@
 ### docker pull 命令
 ![Alt text](pic/image1.png)
 - 运行镜像可以产生容器
-- 如:```docker pull nginx:1.22``` //默认为最新版本
+- 如:```docker pull nginx:1.22``` //默认为最新版本latest
 - 查看本地镜像，```docker images``` 
 - 查看运行中的镜像命令，```docker ps``` 
+- 查看所有的镜像命令，```docker ps -a ``` 
 - 查看启动日志命令，```docker logs 容器名称或者id``` 
+- 创建并运行容器 ```docker run -d --name some-nginx -p 8080:80 nginx:1.22```，并给容器指定名称some-nginx。
 
-#### 公开端口(-p)
-```docker run --name some-nginx -d -p 8080:80 nginx:1.22```
+#### 映射端口(-p)
+```docker run -d --name some-nginx -p 8080:80 nginx:1.22```
 - some-nginx为容器的名称，-d表示容器在后台运行。-p表示将容器的端口80绑定到宿主机的端口8080。
-- 默认情况下，容器无法通过外部网络访问。需要使用-p参数将容器的端口映射到宿主机端口，才可以通过宿主机IP进行访问。浏览器打开 http://192.168.56.106:8080
+- 默认情况下，容器无法通过外部网络访问。需要使用-p参数将容器的端口映射到宿主机端口，才可以通过宿主机IP进行访问。浏览器打开 http://ip:8080
 - ```docker stop some-nginx```  //停止容器
 - ```docker ps -a``` //查看所有的容器
 - ```docker rm 容器id或者名称``` //删除容器
@@ -93,7 +157,6 @@
 
 #### docker run开箱即用
 - ```docker inspect some-mysql（容器名称）``` //查看容器的信息
-
 
 #### 前台交互运行
 - 创建一个新的容器，使用mysql客户端```docker run -it --rm mysql:5.7 mysgl -h172.17.0.2 -uroot -p``` 
