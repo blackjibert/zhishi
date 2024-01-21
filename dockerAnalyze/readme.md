@@ -22,13 +22,13 @@
 - 执行docker ps命令，如果不版情，说明启动成功，sudo docker ps 运行的镜像，docker ps -a 所有的镜像
 
 ### mysql部署
-- sudo docker pull mysql
-- sudo docker run -d --name mysql -p 3306:3306 -e TZ=Asia/Shanghai -e MYSQL_ROOT_PASSWORD=123456 mysql
-- docker run: 创建并运行一个容器，-d是让容器在后台运行
-- --name mysql: 给容器起个名字，必须唯一
-- -p 3306:3306: 设置端口映射，宿主机端口映射到容器内端口
-- -e KEY=VALUE: 设置环境变量
-- mysql:指定运行的镜像的名字，镜像名:版本号
+- ```sudo docker pull mysql```
+- ```sudo docker run -d --name mysql -p 3306:3306 -e TZ=Asia/Shanghai -e MYSQL_ROOT_PASSWORD=123456 mysql```
+- ```docker run```: 创建并运行一个容器，-d是让容器在后台运行
+- ```--name mysql```: 给容器起个名字，必须唯一
+- ```-p 3306:3306```: 设置端口映射，宿主机端口映射到容器内端口
+- ```-e KEY=VALUE```: 设置环境变量
+- ```mysql```:指定运行的镜像的名字，镜像名:版本号
 ![Alt text](pic/image8.png)
 
 #### docker run和docker start
@@ -40,6 +40,7 @@
 - 当我们利用Docker安装应用时，Docker会自动搜索并下载应用镜像(image)。镜像不仅包含应用本身，还包含应用运行所需要的环境、配置、系统函数库。Docker会在运行镜像时创建一个隔离环境，称为容器(container)。
 - 镜像仓库:存储和管理镜像的平台，Docker官方维护了一个公共仓库:DockerHub。
 ![Alt text](pic/image7.png)
+- 镜像都是最小化的系统环境。
 - **镜像是一个静态的、可重复使用的软件包，而容器是运行时实例（容器针对于同一个镜像可以有多个），是基于镜像创建的、可执行的进程。多个容器可以共享同一个镜像，但每个容器都是独立运行的实例。容器提供了隔离和轻量级的虚拟化，使应用程序在不同环境中具有一致的运行行为。** 删除镜像的话，需要删除其容器。首先查看docker ps -a，然后删除 docker rm 容器，最后 docker iamges 镜像。
 
 ### docker 常用命令  
@@ -50,16 +51,36 @@
 ### 查看DockerHub，拉取Nginx镜像，创建并运行Nginx容器
 #### 需求:
 - 在DockerHub中搜索Nginx镜像，查看镜像的名称 
-- 拉取Nginx镜像 docker pull nginx:1.22
-- 查看本地镜像列表 docker images
-- 创建并运行Nginx容器  sudo docker run -d --name nginx -p 8080:80 nginx:1.22 也可以在创建并并行一个sudo docker run -d --name nginx2 -p 8081:80 nginx:1.22 注意宿主机端口改变和名称改变
-- 查看容器            docker ps
-- 停止容器            docker stop nginx:1.22
-- 再次启动容器        docker start nginx:1.22
-- 进入Nginx容器       docker exec -it  nginx:1.22 bash, ```-it```是使用交互模式，可以在控制台里输入、输出  
-- 删除容器            docker rm nginx
-- 删除容器2           docker rm nginx2
-- 删除镜像            docker rmi nginx
+- 拉取Nginx镜像 ```docker pull nginx:1.22```
+- 查看本地镜像列表 ```docker images```
+- 创建并运行Nginx容器  ```sudo docker run -d --name nginx -p 8080:80 nginx:1.22``` 也可以在创建并并行一个```sudo docker run -d --name nginx2 -p 8081:80 nginx:1.22``` 注意宿主机端口改变和名称改变
+- 查看容器            ```docker ps```
+- 停止容器            ```docker stop nginx:1.22```
+- 再次启动容器        ```docker start nginx:1.22```
+- 进入Nginx容器       ```docker exec -it  nginx:1.22 bash```, ```-it```是使用交互模式，可以在控制台里输入、输出。  
+- 删除容器            ```docker rm nginx```
+- 删除容器2           ```docker rm nginx2```
+- 删除镜像            ```docker rmi nginx```
+- 日志监控镜像         ```docker logs -f nginx```, 其中```-f```是一直监控
+
+### 数据卷挂载
+#### 数据卷(volume)是一个虚拟目录，是容器内目录与宿主机目录之间映射的桥梁（双向绑定，修改任一方，另一方随之变化）。
+- 容器内的文件会映射到宿主机，非常方便的修改容器内的文件，或者方便迁移容器内产生的数据。
+- 以nginx为例，容器内的路径位/usr/share/nginx/html
+![Alt text](pic/image10.png)
+- ```docker volume create```   创建数据卷   
+- ```docker volume ls```       查看所有数据卷
+- ```docker volume rm```       删除指定数据卷
+- ```docker volume inspect```  查看某个数据卷的详情，包括在宿主机内的路径
+- ```docker volume prune```    清除数据卷
+- 通过```docker volume --help``` 查看有关命令的信息
+#### 案例1-利用Nginx容器部署静态资源
+##### 需求:
+- 创建Nginx容器，修改nginx容器内的html目录下的index.html文件，查看变化将静态资源部署到nginx的html目录。
+- 在执行docker run命令时，使用```-v数据卷:容器内目录 ```可以完成数据卷挂载
+- 当创建容器时，如果挂载了数据卷且数据卷不存在，会**自动创建数据卷**
+- ```docker run -d -name nginx -p 80:80 -v html:/usr/share/nginx/html nginx:1.22```
+- -v 为数据卷参数 数据卷名称（可以改变，唯一）:容器内目录（根据业务需求去找，是固定的，比如nginx容器内的位置为/usr/share/nginx/html）
 
 ## Docker和虚拟机的不同
 #### 1、启动速度不同
@@ -98,7 +119,6 @@
 ##### Docker是一个开源的应用容器引擎，由于docker影响巨大，今天也用“Docker”指代容器化技术。
 
 ### Docker优势
-
 #### 一键部署，开箱即用
 - 容器使用基于image镜像的部署模式，image中包含了运行应用程序所需的一切: 代码运行时、系统工具、系统库和配置文件。无论是单个程序还是多个程序组成的复杂服务，或者分布式系统，都可以使用 ```docker run``` 或 ```docker compose up``` 命令一键部署，省去了大量搭建、配置环境、调试和排查错误的时间。
 #### 一次打包，到处运行
