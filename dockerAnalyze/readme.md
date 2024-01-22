@@ -15,16 +15,17 @@
 - 安装docker,  sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 - 启动和校验
-- 启动docker, sudo systemctl start docker 
-- 停止dockor, sudo systemctl stop dotker
-- 重启, sudo systemctl restart docker
-- 设置开机启动, sudo systemctl enable docker
-- 执行docker ps命令，如果不版情，说明启动成功，sudo docker ps 运行的镜像，docker ps -a 所有的镜像
+- 启动docker, ```sudo systemctl start docker```
+- 停止dockor, ```sudo systemctl stop dotker```
+- 重启, ```sudo systemctl restart docker```
+- 设置开机启动, ```sudo systemctl enable docker```
+- 执行docker ps命令，如果不版情，说明启动成功，```sudo docker ps``` 运行的镜像，```docker ps -a``` 所有的镜像
 
 ### mysql部署
-- ```sudo docker pull mysql```
-- ```sudo docker run -d --name mysql -p 3306:3306 -e TZ=Asia/Shanghai -e MYSQL_ROOT_PASSWORD=123456 mysql```
-- ```docker run```: 创建并运行一个容器，-d是让容器在后台运行
+- ```sudo docker pull mysql:5.7```
+- ```sudo docker run -d --name mysql -p 3306:3306 -e TZ=Asia/Shanghai -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7```
+- ```docker run```: 创建并运行一个容器
+- ```-d```是让容器在后台运行
 - ```--name mysql```: 给容器起个名字，必须唯一
 - ```-p 3306:3306```: 设置端口映射，宿主机端口映射到容器内端口
 - ```-e KEY=VALUE```: 设置环境变量
@@ -63,7 +64,7 @@
 - 删除镜像            ```docker rmi nginx```
 - 日志监控镜像         ```docker logs -f nginx```, 其中```-f```是一直监控
 
-### 数据卷挂载
+### 基于数据卷的挂载
 #### 数据卷(volume)是一个虚拟目录，是容器内目录与宿主机目录之间映射的桥梁（双向绑定，修改任一方，另一方随之变化）。
 - 容器内的文件会映射到宿主机，非常方便的修改容器内的文件，或者方便迁移容器内产生的数据。
 - 以nginx为例，容器内的路径位/usr/share/nginx/html
@@ -81,6 +82,36 @@
 - 当创建容器时，如果挂载了数据卷且数据卷不存在，会**自动创建数据卷**
 - ```docker run -d -name nginx -p 80:80 -v html:/usr/share/nginx/html nginx:1.22```
 - -v 为数据卷参数 数据卷名称（可以改变，唯一）:容器内目录（根据业务需求去找，是固定的，比如nginx容器内的位置为/usr/share/nginx/html）
+
+#### 基于本地目录的挂载
+#### 案例2-mysql容器的数据挂载
+##### 需求:
+- 查看mysql容器，判断是否有数据卷挂载
+- 基于宿主机目录实现MySQL数据目录、配置文件、初始化脚本的挂载(查阅官方镜像文档)
+- 挂载```/root/mysql/data```**数据目录**到容器内的```/var/lib/mysql```目录。
+- 挂载```/root/mysql/init```**初始化脚本**到容器内的```/docker-entrypoint-initdb.d```目录。
+- 挂载```/root/mysql/conf```**配置文件**到容器内的```/etc/mysql/conf.d```目录。
+- 以上3个本地目录先创建。
+- ```sudo docker run -d --name mysql -p 3306:3306 -e TZ=Asia/Shanghai -e MYSQL_ROOT_PASSWORD=123456 -v /root/mysqlidata:/var/lib/mysql -v /root/mysal/init:/docker-entrypoint-initdb.d -v /root/mysql/conf:/etc/mysql/conf.d mysql:5.7```
+
+- conf目录下的hm.cnf配置文件:
+```
+[client]
+default_character_set=utf8mb4
+[mysql]
+default_character_set=utf8mb4
+[mysqld]
+character_set_server=utf8mb4
+collation_server=utf8mb4_unicode_ci
+init_connect='SET NAMES utf8mb4'
+```
+- mysql 把数据存储目录挂载到宿主机，保证数据的解耦合，通过默认的**匿名卷**。当需要对mysql容器版本进行升级，需要把旧的容器删除之后，但是数据卷依旧存在（需要命令```docker volume rm XX``` 才可以对数据卷进行删除，这里没必要，因为只是mysql容器的版本需要更新，数据卷不需要删除，要完成迁移），数据依然在。当生成新的容器版本时，生成的数据卷名称变化，原来的数据存在旧的数据卷里面，没有完成数据的迁移。
+
+#####  注意
+- 在执行docker run命令时，使用```-v 本地目录:容器内目录```可以完成本地目录挂载。
+- 本地目录必须以```"/"```或```"./"```开头，如果直接以名称开头，会被识别为数据卷而非本地目录。
+- 例：```-v mysql:/var/lib/mysql```会被识别为一个数据卷叫mysql。
+- 例：```-v ./mysql:/var/lib/mysql```会被识别为当前目录下的mysql目录。
 
 ## Docker和虚拟机的不同
 #### 1、启动速度不同
