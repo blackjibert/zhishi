@@ -83,16 +83,17 @@
 - ```docker run -d -name nginx -p 80:80 -v html:/usr/share/nginx/html nginx:1.22```
 - -v 为数据卷参数 数据卷名称（可以改变，唯一）:容器内目录（根据业务需求去找，是固定的，比如nginx容器内的位置为/usr/share/nginx/html）
 
-#### 基于本地目录的挂载
+### 基于本地目录的挂载
+
 #### 案例2-mysql容器的数据挂载
 ##### 需求:
 - 查看mysql容器，判断是否有数据卷挂载
-- 基于宿主机目录实现MySQL数据目录、配置文件、初始化脚本的挂载(查阅官方镜像文档)
-- 挂载```/root/mysql/data```**数据目录**到容器内的```/var/lib/mysql```目录。
-- 挂载```/root/mysql/init```**初始化脚本**到容器内的```/docker-entrypoint-initdb.d```目录。
-- 挂载```/root/mysql/conf```**配置文件**到容器内的```/etc/mysql/conf.d```目录。
+- 基于宿主机目录实现MySQL数据目录、**配置文件**、**初始化脚本的挂载**(**查阅官方镜像文档**)
+- 挂载自定的```/root/mysql/data```**数据目录**到容器内指定的```/var/lib/mysql```目录。```-v /root/mysql/init:/docker-entrypoint-initdb.d```
+- 挂载自定的```/root/mysql/init```**初始化脚本**到容器内指定的```/docker-entrypoint-initdb.d```目录。 ```-v /root/mysql/init:/docker-entrypoint-initdb.d ```。这里可以放一些创建表的sql语句。
+- 挂载```/root/mysql/conf```**配置文件**到容器内的```/etc/mysql/conf.d```目录。```-v /root/mysql/conf:/etc/mysql/conf.d```
 - 以上3个本地目录先创建。
-- ```sudo docker run -d --name mysql -p 3306:3306 -e TZ=Asia/Shanghai -e MYSQL_ROOT_PASSWORD=123456 -v /root/mysqlidata:/var/lib/mysql -v /root/mysal/init:/docker-entrypoint-initdb.d -v /root/mysql/conf:/etc/mysql/conf.d mysql:5.7```
+```docker run -d --name mysql -p 3308:3306 -e TZ=Asia/Shanghai -e MYSQL_ROOT_PASSWORD=123456 -v /root/mysql/data:/var/lib/mysql -v /root/mysql/init:/docker-entrypoint-initdb.d -v /root/mysql/conf:/etc/mysql/conf.d mysql:5.7 ```
 
 - conf目录下的hm.cnf配置文件:
 ```
@@ -105,13 +106,18 @@ character_set_server=utf8mb4
 collation_server=utf8mb4_unicode_ci
 init_connect='SET NAMES utf8mb4'
 ```
-- mysql 把数据存储目录挂载到宿主机，保证数据的解耦合，通过默认的**匿名卷**。当需要对mysql容器版本进行升级，需要把旧的容器删除之后，但是数据卷依旧存在（需要命令```docker volume rm XX``` 才可以对数据卷进行删除，这里没必要，因为只是mysql容器的版本需要更新，数据卷不需要删除，要完成迁移），数据依然在。当生成新的容器版本时，生成的数据卷名称变化，原来的数据存在旧的数据卷里面，没有完成数据的迁移。
+##### 为什么要进行基于本地目录的挂载
+- mysql 随着数据库数据的增长，mysql把数据存储目录挂载到宿主机，保证数据的解耦合，一般是通过默认的**匿名卷**（名字很长的随机生成的一大串）。如果需要对mysql容器版本进行升级，也就是需要先把旧的容器删除（```docker rm -f some-mysql```），但是数据卷依旧存在（```docker volume ls```, 需要命令```docker volume rm XX``` 才可以对数据卷进行删除，这里没必要，因为只是mysql容器的版本需要更新，数据卷不需要删除，而且要完成迁移），数据依然在。当生成新的容器版本时，生成的数据卷名称发生过变化（因为是随机生成的），原来的数据存在旧的数据卷里面，无法没有完成数据的迁移（可以进入旧的数据卷里面，把数据拷贝出来，不建议使用**匿名卷**），这里就可以进行基于本地目录的挂载，任何一个本地目录。
 
 #####  注意
 - 在执行docker run命令时，使用```-v 本地目录:容器内目录```可以完成本地目录挂载。
 - 本地目录必须以```"/"```或```"./"```开头，如果直接以名称开头，会被识别为数据卷而非本地目录。
 - 例：```-v mysql:/var/lib/mysql```会被识别为一个数据卷叫mysql。
 - 例：```-v ./mysql:/var/lib/mysql```会被识别为当前目录下的mysql目录。
+
+##### 远程连接docker的mysql
+- 需要授权
+- https://blog.csdn.net/weixin_43049705/article/details/119843679
 
 ## Docker和虚拟机的不同
 #### 1、启动速度不同
@@ -166,7 +172,6 @@ init_connect='SET NAMES utf8mb4'
 
 #### 安装Docker
 - ```sudo yum install docker-ce docker-ce-cli containerd.io docker-compose-plugin```
-
 
 #### 启动docker
 - ```sudo systemctl start  docker```
