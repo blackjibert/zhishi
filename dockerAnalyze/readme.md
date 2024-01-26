@@ -88,11 +88,11 @@
 #### 案例2-mysql容器的数据挂载
 ##### 需求:
 - 查看mysql容器，判断是否有数据卷挂载
-- 基于宿主机目录实现MySQL数据目录、**配置文件**、**初始化脚本的挂载**(**查阅官方镜像文档**)
+- 基于**宿主机目录**实现MySQL数据目录、**配置文件**、**初始化脚本的挂载**(**查阅官方镜像文档**)
 - 挂载自定的```/root/mysql/data```**数据目录**到容器内指定的```/var/lib/mysql```目录。```-v /root/mysql/init:/docker-entrypoint-initdb.d```
 - 挂载自定的```/root/mysql/init```**初始化脚本**到容器内指定的```/docker-entrypoint-initdb.d```目录。 ```-v /root/mysql/init:/docker-entrypoint-initdb.d ```。这里可以放一些创建表的sql语句。
 - 挂载```/root/mysql/conf```**配置文件**到容器内的```/etc/mysql/conf.d```目录。```-v /root/mysql/conf:/etc/mysql/conf.d```
-- 以上3个本地目录先创建。
+- 以上3个本地目录先在本地创建。
 ```docker run -d --name mysql -p 3308:3306 -e TZ=Asia/Shanghai -e MYSQL_ROOT_PASSWORD=123456 -v /root/mysql/data:/var/lib/mysql -v /root/mysql/init:/docker-entrypoint-initdb.d -v /root/mysql/conf:/etc/mysql/conf.d mysql:5.7 ```
 
 - conf目录下的hm.cnf配置文件:
