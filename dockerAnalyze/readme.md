@@ -119,7 +119,10 @@ init_connect='SET NAMES utf8mb4'
 - 例：```-v ./mysql:/var/lib/mysql```会被识别为当前目录下的mysql目录。
 
 ##### 远程连接docker的mysql
-- 需要授权 
+- 需要授权, 添加远程登录用户
+- https://blog.csdn.net/jin_tmac/article/details/124627780
+- ```CREATE USER 'zhj'@'%' IDENTIFIED WITH mysql_native_password BY '123456';```
+- ```GRANT ALL PRIVILEGES ON *.* TO 'zhj'@'%';```
 - https://blog.csdn.net/weixin_43049705/article/details/119843679
 
 ### Docker 语法
@@ -146,6 +149,7 @@ init_connect='SET NAMES utf8mb4'
 ![Alt text](pic/image11.png)
 
 #### dockerfile
+- Dockerfile就是利用固定的指令来描述镜像的结构和构建过程，这样Docker才可以依次来构建镜像。
 - Dockerfile就是一个文本文件，其中包含一个个的指令(Instruction)，用指令来说明要执行什么操作来构建镜像。将来Docker可以根据Dockerfile帮我们构建镜像。
 - 常见指令如下: 
 ![Alt text](pic/image12.png)
@@ -160,7 +164,51 @@ init_connect='SET NAMES utf8mb4'
 - ```docker build -t myImage:1.0 . ```
 - ```-t``` 是给镜像起名，格式依然是```repository:tag```的格式，不指定```tag```时，默认为```latest```。
 - ```.``` 是指定Dockerfile所在目录，如果就在当前目录则指定为```.```。
+- 加载镜像``` docker load -i jdk.tar ```。
+- 通过``` docker images ``` 查看。
 
+- 进入demo目录，基于Dockerfile文件构建镜像 ```docker build -t docker-demo1 . ```。 ```docker build -t 镜像名 Dockerfile目录```。
+- 通过``` docker images ``` 查看镜像docker-demo1。
+- 运行镜像``` docker run -d --name dd -p  8083:8080 docker-demo1 ``` 端口是宿主机8083映射到容器内8080，容器命名dd。
+- 查看容器日志 ``` docker logs -f dd```。
+
+##### 其中Dockerfile文件文件如下：
+```
+# 基础镜像
+FROM openjdk:11.0-jre-buster
+# 设定时区
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+# 拷贝jar包
+COPY docker-demo.jar /app.jar
+# 入口
+ENTRYPOINT ["java", "-jar", "/app.jar"][root@localhost demo]#
+```
+## docker 容器网络互连
+#### 网络
+- 默认情况下，所有容器都是以bridge方式连接到Docker的一个虚拟网桥上，如下:
+![Alt text](pic/image15.png)
+- 这时候的容器ip是可能随时变化的，因为每次重新启动的时候，有别的容器也在启动的话，ip是递增的。但是每次重启，容器名是不变的。
+
+#### 自定义网络
+- 加入自定义网络的容器才可以通过容器名互相访问，Docker的网络操作命令如下:
+- 通过```ip addr ```显示网络情况。
+![Alt text](pic/image16.png)
+- ``` docker network --help```
+- 查看所有网络 ``` docker network ls ```。
+- 创建网络 ``` docker network create mynetwok```。
+-  查看网络 ```ip addr ```如下：
+![Alt text](pic/image17.png)
+- 将容器加入网络，``` docker network connect mynetwork dd ```。
+- 查看容器信息 ``` docker inspect dd```。除了默认的网络bridge信息，还有新的mynetwork信息。
+![Alt text](pic/image18.png)
+
+- 指定容器dd离开默认的bridge网络``` docker network disconnect bridge dd``` 
+- 查看容器信息 ``` docker inspect dd```，如下：
+![Alt text](pic/image19.png)
+- 也可以在创建容器的时候指定网络信息。``` docker run -d--name dd -p 8083:8080 --network mynetwork docker-demo ```。
+
+##### docker network prune 用于清理不再使用的网络，而 docker network rm 用于明确删除指定的网络。
 
 ## Docker和虚拟机的不同
 #### 1、启动速度不同
