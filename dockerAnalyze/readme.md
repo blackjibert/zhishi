@@ -3,7 +3,9 @@
 - 快速构建、运行、管理应用的工具
 - 传统安装部署:查看版本，卸载旧的，安装新的（安装依赖）
 ### docker安装
-- 卸载旧版本，sudo yum remove docker \
+- 卸载旧版本
+```
+sudo yum remove docker \
                   docker-client \
                   docker-client-latest \
                   docker-common \
@@ -11,8 +13,9 @@
                   docker-latest-logrotate \
                   docker-logrotate \
                   docker-engine
-- 配置yum库，sudo yum install -y yum-utils
-- 安装docker,  sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+- 配置yum库，``` sudo yum install -y yum-utils```
+- 安装docker,  ```sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin```
 
 - 启动和校验
 - 启动docker, ```sudo systemctl start docker```
@@ -118,6 +121,46 @@ init_connect='SET NAMES utf8mb4'
 ##### 远程连接docker的mysql
 - 需要授权 
 - https://blog.csdn.net/weixin_43049705/article/details/119843679
+
+### Docker 语法
+
+#### 自定义镜像
+- 镜像就是包含了应用程序、程序运行的系统函数库、运行配置等文件的文件包。构建镜像的过程其实就是把上述文件打包的过程。
+#### 部署一个ava应用的步骤:
+- 准备一个Linux服务器。
+- 安装JRE并配置环境变量。
+- 拷贝jar包。
+- 运行Jar包。
+#### 构建一个java镜像的步骤:
+- 准备一个Linux运行环境
+- 安装JRE并配置环境变量
+- 拷贝jar包
+- 编写运行脚本
+#### 镜像结构
+##### 入口(Entrypoint)
+- 镜像运行入口，一般是程序启动的脚本和参数。
+##### 层(Layer)
+- 添加安装包、依赖、配置等，每次操作都形成新的一层。
+##### 基础镜像(BaseImage)
+- 应用依赖的系统函数库、环境、配置、文件等
+![Alt text](pic/image11.png)
+
+#### dockerfile
+- Dockerfile就是一个文本文件，其中包含一个个的指令(Instruction)，用指令来说明要执行什么操作来构建镜像。将来Docker可以根据Dockerfile帮我们构建镜像。
+- 常见指令如下: 
+![Alt text](pic/image12.png)
+- 指令参考: https://docs.docker.com/engine/reference/builder/
+
+- 我们可以基于Ubuntu基础镜像，利用Dockerfile描述镜像结构
+![Alt text](pic/image13.png)
+- 也可以直接基于IDK为基础镜像，省略前面的步骤
+![Alt text](pic/image14.png)
+
+#### 当编写好了Dockerfile，可以利用下面命令来构建镜像:
+- ```docker build -t myImage:1.0 . ```
+- ```-t``` 是给镜像起名，格式依然是```repository:tag```的格式，不指定```tag```时，默认为```latest```。
+- ```.``` 是指定Dockerfile所在目录，如果就在当前目录则指定为```.```。
+
 
 ## Docker和虚拟机的不同
 #### 1、启动速度不同
