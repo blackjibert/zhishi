@@ -33,12 +33,12 @@ sudo yum remove docker \
 - ```-p 3306:3306```: 设置端口映射，宿主机端口映射到容器内端口
 - ```-e KEY=VALUE```: 设置环境变量
 - ```mysql```:指定运行的镜像的名字，镜像名:版本号
-![Alt text](pic/image8.png)
+- ![Alt text](pic/image8.png)
 
 #### docker run和docker start
-- docker run 只在第一次运行时使用，将镜像放到容器中，以后再次启动这个容器时，只需要使用命令docker start 即可。
+- ```docker run``` 只在第一次运行时使用，将镜像放到容器中，以后再次启动这个容器时，只需要使用命令docker start 即可。
 - docker run 相当于执行了两步操作：将镜像放入容器中（docker create）,然后将容器启动，使之变成运行时容器（docker start）。
-- docker start的作用是，重新启动已存在的镜像。也就是说，如果使用这个命令，我们必须事先知道这个容器的ID，或者这个容器的名字，我们可以使用docker ps 找到这个容器的信息。
+- ```docker start```的作用是，重新启动已存在的镜像。也就是说，如果使用这个命令，我们必须事先知道这个容器的ID，或者这个容器的名字，我们可以使用docker ps 找到这个容器的信息。
  
 ### 镜像和容器
 - 当我们利用Docker安装应用时，Docker会自动搜索并下载应用镜像(image)。镜像不仅包含应用本身，还包含应用运行所需要的环境、配置、系统函数库。Docker会在运行镜像时创建一个隔离环境，称为容器(container)。
@@ -70,7 +70,7 @@ sudo yum remove docker \
 ### 基于数据卷的挂载
 #### 数据卷(volume)是一个虚拟目录，是容器内目录与宿主机目录之间映射的桥梁（双向绑定，修改任一方，另一方随之变化）。
 - 容器内的文件会映射到宿主机，非常方便的修改容器内的文件，或者方便迁移容器内产生的数据。
-- 以nginx为例，容器内的路径位/usr/share/nginx/html
+- 以nginx为例，容器内的路径为/usr/share/nginx/html
 ![Alt text](pic/image10.png)
 - ```docker volume create```   创建数据卷   
 - ```docker volume ls```       查看所有数据卷
@@ -84,10 +84,9 @@ sudo yum remove docker \
 - 在执行docker run命令时，使用```-v数据卷:容器内目录 ```可以完成数据卷挂载
 - 当创建容器时，如果挂载了数据卷且数据卷不存在，会**自动创建数据卷**
 - ```docker run -d -name nginx -p 80:80 -v html:/usr/share/nginx/html nginx:1.22```
-- -v 为数据卷参数 数据卷名称（可以改变，唯一）:容器内目录（根据业务需求去找，是固定的，比如nginx容器内的位置为/usr/share/nginx/html）
+- ```-v``` 为数据卷参数 数据卷名称（可以改变，唯一）:容器内目录（根据业务需求去找，是固定的，比如nginx容器内的位置为/usr/share/nginx/html）
 
 ### 基于本地目录的挂载
-
 #### 案例2-mysql容器的数据挂载
 ##### 需求:
 - 查看mysql容器，判断是否有数据卷挂载。
@@ -115,8 +114,8 @@ init_connect='SET NAMES utf8mb4'
 #####  注意
 - 在执行docker run命令时，使用```-v 本地目录:容器内目录```可以完成本地目录挂载。
 - 本地目录必须以```"/"```或```"./"```开头，如果直接以名称开头，会被识别为数据卷而非本地目录。
-- 例：```-v mysql:/var/lib/mysql```会被识别为一个数据卷叫mysql。
-- 例：```-v ./mysql:/var/lib/mysql```会被识别为当前目录下的mysql目录。
+- 例：```-v mysql:/var/lib/mysql```被识别为一个数据卷叫mysql。
+- 例：```-v ./mysql:/var/lib/mysql```被识别为当前目录下的mysql目录。
 
 ##### 远程连接docker的mysql
 - 需要授权, 添加远程登录用户
@@ -192,8 +191,8 @@ ENTRYPOINT ["java", "-jar", "/app.jar"][root@localhost demo]#
 
 #### 自定义网络
 - 加入自定义网络的容器才可以通过容器名互相访问，Docker的网络操作命令如下:
-- 通过```ip addr ```显示网络情况。
 ![Alt text](pic/image16.png)
+- 通过```ip addr ```显示网络情况。
 - ``` docker network --help```
 - 查看所有网络 ``` docker network ls ```。
 - 创建网络 ``` docker network create mynetwok```。
@@ -209,6 +208,45 @@ ENTRYPOINT ["java", "-jar", "/app.jar"][root@localhost demo]#
 - 也可以在创建容器的时候指定网络信息。``` docker run -d--name dd -p 8083:8080 --network mynetwork docker-demo ```。
 
 ##### docker network prune 用于清理不再使用的网络，而 docker network rm 用于明确删除指定的网络。
+
+## 项目部署 - 部署java应用
+- idea工具直接打包
+- 将Dockerfile文件和打包完成的jar包复制到root目录下。
+- 其中Dockerfile文件如下:
+```
+# 基础镜像
+FROM openjdk:11.0-jre-buster
+# 设定时区
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+# 拷贝jar包
+COPY hm-service.jar /app.jar
+# 入口
+ENTRYPOINT ["java", "-jar", "/app.jar"]
+``` 
+- root目录下构建镜像```docker build -t hmall . ```
+- 运行镜像,并给容器命名hm```docker run -d --name hm -p 8083:8080 --network mynetwork hmall ```
+
+- 查看容器日志```docker logs -f hm```
+- 注意打包的连接mysql数据端口信息和部署的mysql信息一致.
+- 如下: 
+![Alt text](pic/image20.png)
+
+## 项目部署 - 部署前端(nginx文件)
+#### 需求:创建一个新的nginx容器，将nginx.conf、html目录与容器挂载
+![Alt text](pic/image21.png)
+
+- 实现对nginx进行配置,hmall-portal是商城前端界面,hmall-admin是商城后台管理界面,nginx对这两个界面分别进行代理.
+- 访问通过容器名进行访问,java应用和mysql互连.java应用,mysql, nginx在一个网络内.
+- ```docker run -d --name mynginx -p 18080:18080 -p 18081:18081 -v/root/nginx/html:/usr/share/nginx/html -v /root/nginx/nginx.conf:/etc/nginx/nginx.conf --network mynetwork nginx:1.22```
+
+##### 安装多个版本jdk，可自由切换 
+- 这里需要jdk11版本。
+- https://blog.csdn.net/zdl177/article/details/105246997
+
+## 项目部署 - DockerCompose
+
+
 
 ## Docker和虚拟机的不同
 #### 1、启动速度不同
