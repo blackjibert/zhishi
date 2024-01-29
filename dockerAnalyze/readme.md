@@ -225,9 +225,9 @@ COPY hm-service.jar /app.jar
 ENTRYPOINT ["java", "-jar", "/app.jar"]
 ``` 
 - root目录下构建镜像```docker build -t hmall . ```
-- 运行镜像,并给容器命名hm```docker run -d --name hm -p 8083:8080 --network mynetwork hmall ```
+- 运行镜像,并给容器命名hm```docker run -d --name hmall -p 8083:8080 --network mynetwork hmall ```
 
-- 查看容器日志```docker logs -f hm```
+- 查看容器日志```docker logs -f hmall```
 - 注意打包的连接mysql数据端口信息和部署的mysql信息一致.
 - 如下: 
 ![Alt text](pic/image20.png)
@@ -245,9 +245,65 @@ ENTRYPOINT ["java", "-jar", "/app.jar"]
 - https://blog.csdn.net/zdl177/article/details/105246997
 
 ## 项目部署 - DockerCompose
+- Docker Compose通过一个单独的docker-compose.yml模板文件(YAML格式)来定义一组相关联的应用容器，帮助我们实现多个相互关联的Docker容器的快速部署。
+![Alt text](pic/image22.png)
 
+#### docker-compose.yml文件如下:
+```
+version: "3.8"
 
-
+services:
+  mysql:
+    image: mysql
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: 123456
+    volumes:
+      - "./mysql/conf:/etc/mysql/conf.d"
+      - "./mysql/data:/var/lib/mysql"
+      - "./mysql/init:/docker-entrypoint-initdb.d"
+    networks:
+      - hm-net
+  hmall:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: hm
+    ports:
+      - "8080:8080"
+    networks:
+      - hm-net
+    depends_on:
+      - mysql
+  nginx:
+    image: nginx
+    container_name: nginx
+    ports:
+      - "18080:18080"
+      - "18081:18081"
+    volumes:
+      - "./nginx/nginx.conf:/etc/nginx/nginx.conf"
+      - "./nginx/html:/usr/share/nginx/html"
+    depends_on:
+      - hmall
+    networks:
+      - hm-net
+networks:
+  hm-net:
+    name: hmall
+```
+- docker run命令和dockerCompose.yml的区别,语法不一样.dockerCompose.yml完成需参考docker run命令,两者对比如下: 
+![Alt text](pic/image23.png)
+#### docker compose的命令格式如下:
+![Alt text](pic/image24.png)
+- 先清楚之前存在的容器.
+- 运行命令```docker compose up -d``` ,```-d```还是后台运行.
+- ```docker compose ps``` 查看项目下的所有进程
+- ```docker compose down``` 清除所有容器和网络.
+##### dockercompose还可以完成集群的部署,先实现多服务器的互连,然后集群部署(可以设置负载均衡).
 ## Docker和虚拟机的不同
 #### 1、启动速度不同
 - docker：启动 docker 相当于启动宿主操作系统上的一个进程，启动速度属于秒级别。
