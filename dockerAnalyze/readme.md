@@ -14,9 +14,29 @@ sudo yum remove docker \
                   docker-logrotate \
                   docker-engine
 ```
-- 配置yum库，``` sudo yum install -y yum-utils```
-- 安装docker,  ```sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin```
 
+- Step 1: 安装必要的一些系统工具。``` sudo yum install -y yum-utils device-mapper-persistent-data lvm2``` 
+- Step 2: 添加软件源信息。``` sudo yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo``` 
+- Step 3：设置yum源。 ``` sudo sed -i 's+download.docker.com+mirrors.aliyun.com/docker-ce+' /etc/yum.repos.d/docker-ce.repo``` 
+- Step 4: 更新Docker-CE。``` sudo yum makecache fast``` 
+- Step 5: 安装Docker-CE ``` sudo yum -y install docker-ce``` 
+- 配置yum库，``` sudo yum install -y yum-utils```
+- Step 6: 启动Docker服务。``` sudo systemctl start docker``` 
+- Step 7: 查看Docker服务运行状态，Active显示为：active(running) 表示Docker服务运行正常。``` sudo systemctl status docker``` 
+- Step 8: 设置Docker服务开机自启动。``` sudo systemctl enable docker``` 
+
+### Mariadb数据库
+- step 1: yum安装Mariadb数据库。``` yum -y install mariadb mariadb-server``` 
+
+- step 2: 启动Mariadb数据库。``` systemctl start mariadb``` 
+
+- step 3：初始化Mariadb数据库，并设置root账号密码为Admin@123。提示：密码在输入时不显示为正常现象，请放心操作。``` mysql_secure_installation``` 。
+
+- 添加yum源：
+- ``` yum-config-manager --add-repo http://download.docker.com/linux/centos/docker-ce.repo``` 
+- （阿里仓库）：``` yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo``` 
+- 安装docker,  ```sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin```
+- 
 - 启动和校验
 - 启动docker, ```sudo systemctl start docker```
 - 停止dockor, ```sudo systemctl stop dotker```
@@ -304,6 +324,117 @@ networks:
 - ```docker compose ps``` 查看项目下的所有进程
 - ```docker compose down``` 清除所有容器和网络.
 ##### dockercompose还可以完成集群的部署,先实现多服务器的互连,然后集群部署(可以设置负载均衡).
+
+## 容器集群的必要性
+##### 单个容器的应用可以满足简单应用场景或者少量用户访问，但随着应用越来越复杂、访问量越来越大，单个容器的性能慢慢不支，就需要不断增加更多容器来提高应用的处理能力。但随着容器越来越多，就引发了一系列问题：
+- 如何跨主机部署成百上千个容器？
+- 如何协调和调度大量的容器？
+- 如何在升级应用程序时不会中断服务？
+- 如何监视应用程序的运行状况？
+##### 由于容器本质上是轻量级且短暂存在的，因此在生产环境中运行和管理大量容器，所需工作量巨大。遇到业务访问量特别大的时候，可能需要同时运行数百甚至数千个容器。如果手动管理这些容器，会显著增加管理复杂性。
+##### 所以，当大规模使用容器时，人工管理已经不可行，不得不考虑容器调度、部署、跨节点访问、自动伸缩等问题，这就需要容器集群技术了。
+
+## 容器编排
+##### 容器编排是指自动化容器的部署、管理、扩展和联网。通过容器编排，可以构建跨多个容器的应用服务、跨集群调度容器、扩展这些容器，并持续管理它们的健康状况。容器编排给容器技术带来了巨大的价值，包括：
+
+- 自动化部署：支持根据副本数量，回滚，重启等策略自动部署容器。
+- 服务发现与负载均衡：自动发现增加的容器，并进行流量的负载均衡。
+- 自动化容器恢复：自动对容器进行健康检查，并根据策略进行重启。
+- 弹性伸缩：支持工作节点、容器的自动扩缩容。
+##### 一个容器编排平台的核心功能：首先可以自动生成容器实例，并且生成的容器可以跨服务器的，帮助提高可用性和性能，同时还有健康检查、容错、可扩展、网络、服务发现、滚动升级等功能，可以很好地解决需求与资源的匹配编排问题。
+
+##### 容器编排平台的市场竞争曾经非常激烈，主流的有三个：Docker Swarm、Mesos Marathon和Kubernetes。它们各有特点，但同时满足上面上述能力的，只有**Kubernetes（k8s）**。
+
+##### Kubernetes是一个面向终态的编排系统。用户按照Kubernetes提供的带有编排逻辑的工作负载模版，向Kubernetes声明期望的应用容器的状态，随后Kubernetes会创建对应的工作负载。Kubernetes的调度器一直在监听各种请求，一旦发现创建了对应的应用容器，立马根据计算节点的情况与预定的策略，把容器调度到最适合的计算节点。计算节点也在监听是否有与自己有关的应用容器创建，如果有，立即拉取用户想要的镜像并运行，并向Kubernetes报告应用容器的状态。工作负载的控制器也在不断监听容器集群的状态是否与用户的预期一致，如果不一致，会按照工作负载控制器的编排逻辑进行处理。容器镜像都创建后，计算节点也会自动发现服务并进行业务负载。
+
+### Kubernetes核心概念
+##### Kubernetes简称K8s，是Google开源的一个容器编排引擎，它支持自动化部署、大规模可伸缩、应用容器化管理。
+
+##### 为什么需要Kubernetes？容器是打包和运行应用程序的好方式。在生产环境中，往往需要管理运行着应用程序的容器，并确保服务不会下线。如果一个容器发生故障，则需要启动另一个容器，类似这样的行为可以交由Kubernetes 来处理。Kubernetes 会满足用户的扩展要求、故障转移你的应用、提供部署模式等。
+
+##### 对于容器和Kubernetes的关系，为了便于理解，可以做个类比：Kubernetes就好比一个操作系统，而容器就好比操作系统上运行的一个进程。
+
+#####  Kubernetes中涉及到的关键名词包含以下这些，他们重要但很抽象，建议您先记住这些名词和概念，在本课程中我们将结合后续实际操作步骤为您展开介绍。
+
+- **Pod（容器组）**：Pod是一个逻辑概念，是一组紧密关联的容器的集合。
+Controller（控制器）：控制器通过控制循环监控集群状态，将当前状态转变为期望状态。控制器包含节点控制器、命名空间控制器、工作负载控制器等多种。
+- **Workload（工作负载）**：工作负载是在 Kubernetes 上运行的应用程序，分为无状态、有状态、任务、定时任务等多种类型。
+- **Service（服务）**：将运行在一个或一组Pod上的应用程序公开为网络服务的方法，是真实应用服务的抽象。
+- **PV、PVC**：PV是存储卷，是集群内的存储资源，PV独立于Pod的生命周期。PVC是存储卷声明，是资源的使用者。Pod挂载PVC，PVC消耗PV资源。
+- **Namespace（命名空间）**：命名空间为容器集群提供虚拟的隔离作用。
+- **etcd**：etcd是一个分布式、一致且高可用的**键值**存储系统，通常被用作Kubernetes所有集群数据的后台数据库。
+
+## 阿里云容器服务
+### 容器服务Serverless版 ACK Serverless
+- ACK Serverless是阿里云推出的Serverless版Kubernetes容器服务。用户无需购买节点即可直接部署容器应用，无需对集群进行节点维护和容量规划，根据应用配置的CPU和内存资源量按需付费。ACK Serverless集群提供完善的Kubernetes兼容能力，同时降低了Kubernetes使用门槛，让用户更专注于应用程序，而不是管理底层基础设施。
+
+![Alt text](pic/image25.png)
+- 集群中的Pod基于弹性容器实例ECI运行在安全隔离的容器运行环境中。
+
+#### 弹性容器实例ECI
+- ACK Serverless底层基于弹性容器实例（ECI）来运行Pod，弹性容器实例ECI（Elastic Container Instance）是面向容器的无服务器弹性计算服务， 是跟 云服务器ECS 同级别的计算资源类产品，针对云原生时代的需求进行了针对性的改进和优化。
+
+![Alt text](pic/image26.png)
+
+- ECI是面向容器的无服务器弹性计算服务
+- ECI提供免运维、强隔离、快速启动的容器运行环境
+- 使用ECI无需购买和管理底层ECS服务器，让用户更加关注在容器应用而非底层基础设施的维护工作。
+
+### ACK Serverless主要特点
+- 1、虚拟节点：ACK Serverless集群基于虚拟节点创建Pod，虚拟节点实现了Kubernetes与弹性容器实例ECI的无缝连接，让Kubernetes集群获得极大的弹性能力，而不必关心底层计算资源容量。
+- 2、安全隔离：ACK Serverless集群中的Pod基于ECI运行在安全隔离的容器运行环境中，底层通过轻量级虚拟化安全沙箱技术完全强隔离，容器实例间互不影响；同时实例在调度时尽可能分布在不同的物理机上，进一步保障了高可用性。
+- 3、Pod配置：支持原生的Kubernetes Pod功能，支持执行命令kubectl logs访问容器日志和执行kubectl exec进入容器，ECI支持多种规格配置的方式申请资源和计费。
+- 4、应用负载管理：支持Deployment、StatefulSet、Job/CronJob、Pod、CRD等原生Kubernetes负载类型。
+
+### 构建和运行企业网站应用的主要步骤
+- 基于ACK Serverless搭建公司网站应用，一共分为三大步骤，分别是：
+- **（1）创建ACK Serverless集群和准备资源**；在阿里云控制台创建并生成ACK Serverless集群，然后要准备好部署应用所需要的资源，包括准备好WordPress网站所需的数据库、确定公司网站镜像可用、并准备好存放网站站点目录所需的持久存储(容器集群之外,文件存储NAS)。
+
+- **（2）部署与配置网站应用**；在ACK Serverless集群上部署应用。部署应用时要注意，创建的应用类型是无状态的，还要设置副本数量，副本数量需要根据前期评估的访问量进行设置。1）在ACK Serverless中要如何使用文件存储NAS(首先需要创建PV和PVC，让PV要指向对应的NAS，才能把PVC给到应用集群使用)。2）另外，还要创建服务，并开通负载均衡，让用户可以通过负载均衡访问服务。
+
+- **（3）应用运维与集群管理**。从ACK Serverless控制台，熟悉并查看集群、无状态、容器组、服务等信息，查看容器日志，管理集群，还可以设置相应的监控和告警。
+
+![Alt text](pic/image27.png)
+
+### 一、创建ACK Serverless集群
+#### 1、创建ACK Serverless集群
+- 在这里我们可以看到阿里云容器服务ACK的不同版本，本次任务我们选择ACK Serverless集群进行资源创建。
+#### 2、配置组件（本次任务暂且不涉及），直接创建生成集群。
+##### 容器集群的管理节点
+- Kubernetes是由控制平面的一个或多个管理节点（Master Node）和计算平面的多个工作节点（Worker Node）组成的。那么，刚创建的ACK Serverless集群对应多个管理节点组成的控制平面。一个管理节点包含四个主要组件：API Server、Controller Manager、Scheduler 及 etcd，他们之间存在一定的协作关系。
+
+![Alt text](pic/image28.png)
+
+- **API Server**：Kubernetes集群的统一服务入口，负责资源的认证、鉴权以及CRUD（增删改查）等操作，提供Restful API接口，提供其他模块之间数据交互和通信的枢纽，API Server接收客户端发起的控制资源对象的API请求，将期望状态存储到etcd中。
+- **Controller Manager**：所有资源对象的自动化控制中心，完成对集群内Node、Pod、Service等资源状态的管理，确保集群始终处于预期的工作状态；
+- **Scheduler**：Pod资源对象的调度服务。将待调度的 Pod 按照一定的调度算法和策略绑定到合适的Node节点上，并将绑定信息写入到 etcd 中；
+- **etcd**：是一个分布式的存储系统，所有Kubernetes资源对象的数据，都放置在 etcd 中，etcd 本身是一个高可用系统。
+
+### 二、准备资源
+#### 3、准备公司网站WordPress的应用镜像；
+- 提前构建好WordPress网站应用的镜像，并上传到镜像服务ACR中。现在直接基于镜像部署应用，选择位于ACR仓库中的WordPress网站应用镜像。
+- ACR是阿里云容器镜像服务，可以用于镜像的托管和全生命流程管理。
+
+#### 4、创建用于存放公司网站WordPress站点目录的NAS；
+- 通过文件存储NAS的控制台，选择通用型NAS，配置NAS的协议类型NFS等参数，完成创建。
+
+- NAS创建完成后，记录其挂载点地址，后续ACK Serverless存储卷的挂载点将使用该地址。
+
+#### 5、创建用于保存企业网站WordPress结构化数据的云数据库MySQL；
+- WordPress网站的数据库独立于ACK Serverless集群，由于公司网站业务的访问存在明显的波动特征，为了让数据库也能匹配业务波动，我们选择了免运维、计算资源能自动弹性扩缩容的RDS MySQL Serverless实例。
+
+
+
+
+
+
+## docker的技术特点：
+- 容器是自包含的。它打包了应用程序及其所有依赖，可以直接运行。
+- 容器是可移植的。可以在几乎任何地方以相同的方式运行。这就可以确保应用在开发环境、测试环境、生产环境等都有完全一样的运行环境。
+- 容器是轻量级的。占用资源很少，可以秒级启动。
+- 容器是互相隔离的。同一主机上运行的多个容器，不会互相影响。
+
+
 ## Docker和虚拟机的不同
 #### 1、启动速度不同
 - docker：启动 docker 相当于启动宿主操作系统上的一个进程，启动速度属于秒级别。
