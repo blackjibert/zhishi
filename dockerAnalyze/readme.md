@@ -174,7 +174,7 @@ init_connect='SET NAMES utf8mb4'
 
 - 我们可以基于Ubuntu基础镜像，利用Dockerfile描述镜像结构
 ![Alt text](pic/image13.png)
-- 也可以直接基于IDK为基础镜像，省略前面的步骤
+- 也可以直接基于JDK为基础镜像，省略前面的步骤
 ![Alt text](pic/image14.png)
 
 #### 当编写好了Dockerfile，可以利用下面命令来构建镜像:
