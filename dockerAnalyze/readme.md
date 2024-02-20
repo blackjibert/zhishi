@@ -14,7 +14,6 @@ sudo yum remove docker \
                   docker-logrotate \
                   docker-engine
 ```
-
 - Step 1: 安装必要的一些系统工具。``` sudo yum install -y yum-utils device-mapper-persistent-data lvm2``` 
 - Step 2: 添加软件源信息。``` sudo yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo``` 
 - Step 3：设置yum源。 ``` sudo sed -i 's+download.docker.com+mirrors.aliyun.com/docker-ce+' /etc/yum.repos.d/docker-ce.repo``` 
@@ -36,13 +35,12 @@ sudo yum remove docker \
 - ``` yum-config-manager --add-repo http://download.docker.com/linux/centos/docker-ce.repo``` 
 - （阿里仓库）：``` yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo``` 
 - 安装docker,  ```sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin```
-- 
 - 启动和校验
 - 启动docker, ```sudo systemctl start docker```
 - 停止dockor, ```sudo systemctl stop dotker```
 - 重启, ```sudo systemctl restart docker```
 - 设置开机启动, ```sudo systemctl enable docker```
-- 执行docker ps命令，如果不版情，说明启动成功，```sudo docker ps``` 运行的镜像，```docker ps -a``` 所有的镜像
+- 执行```docker ps```命令，如果不版情，说明启动成功，```docker ps``` 查看运行的镜像，```docker ps -a``` 所有的镜像
 
 ### mysql部署
 - ```sudo docker pull mysql:5.7```
@@ -77,11 +75,11 @@ sudo yum remove docker \
 - 在DockerHub中搜索Nginx镜像，查看镜像的名称 
 - 拉取Nginx镜像 ```docker pull nginx:1.22```
 - 查看本地镜像列表 ```docker images```
-- 创建并运行Nginx容器  ```sudo docker run -d --name nginx -p 8080:80 nginx:1.22``` 也可以在创建并并行一个```sudo docker run -d --name nginx2 -p 8081:80 nginx:1.22``` 注意宿主机端口改变和名称改变
+- 创建并运行Nginx容器  ```sudo docker run -d --name nginx -p 8080:80 nginx:1.22``` 也可以在创建并运行一个```sudo docker run -d --name nginx2 -p 8081:80 nginx:1.22``` 注意宿主机端口改变和名称改变
 - 查看容器            ```docker ps```
 - 停止容器            ```docker stop nginx:1.22```
 - 再次启动容器        ```docker start nginx:1.22```
-- 进入Nginx容器       ```docker exec -it  nginx:1.22 bash```, ```-it```是使用交互模式，可以在控制台里输入、输出。  
+- 进入Nginx容器       ```docker exec -it  nginx:1.22 bash```, ```-it```是使用交互模式，可以在控制台里输入、输出
 - 删除容器            ```docker rm nginx```
 - 删除容器2           ```docker rm nginx2```
 - 删除镜像            ```docker rmi nginx```
